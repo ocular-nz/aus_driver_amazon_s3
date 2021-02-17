@@ -4,10 +4,16 @@
 		<header/>
 		<body>
 			<trans-unit id="driverConfiguration.region">
-				<source>Amazon S3: Region</source>
+				<source>Amazon S3: Region (ignore unless using AWS)</source>
 			</trans-unit>
 			<trans-unit id="driverConfiguration.bucket">
 				<source>Amazon S3: Bucket</source>
+			</trans-unit>
+			<trans-unit id="driverConfiguration.endpoint">
+				<source>Amazon S3: Endpoint</source>
+			</trans-unit>
+			<trans-unit id="driverConfiguration.acl">
+				<source>Upload ACL (usually public-read)</source>
 			</trans-unit>
 			<trans-unit id="driverConfiguration.key">
 				<source>Amazon S3: Key</source>
@@ -16,7 +22,10 @@
 				<source>Amazon S3: Secret key</source>
 			</trans-unit>
 			<trans-unit id="driverConfiguration.publicBaseUrl">
-				<source>Amazon S3: Public base URL (optional)</source>
+				<source>Amazon S3: Public base URL (CDN url)</source>
+			</trans-unit>
+			<trans-unit id="driverConfiguration.defaultUploadFolder">
+				<source>Default upload folder (must be created)</source>
 			</trans-unit>
 			<trans-unit id="driverConfiguration.cacheHeaderDuration">
 				<source>Cache header: max age (in seconds, optional)</source>

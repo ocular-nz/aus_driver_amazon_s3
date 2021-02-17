@@ -15,6 +15,16 @@
 					</config>
 				</TCEforms>
 			</bucket>
+			<endpoint>
+				<TCEforms>
+					<label>LLL:EXT:aus_driver_amazon_s3/Resources/Private/Language/locallang_flexform.xlf:driverConfiguration.endpoint</label>
+					<config>
+						<type>input</type>
+						<size>30</size>
+						<default>https://sfo2.digitaloceanspaces.com</default>
+					</config>
+				</TCEforms>
+			</endpoint>
 			<region>
 				<TCEforms>
 					<label>LLL:EXT:aus_driver_amazon_s3/Resources/Private/Language/locallang_flexform.xlf:driverConfiguration.region</label>
@@ -114,6 +124,7 @@
 						<size>1</size>
 						<minitems>1</minitems>
 						<maxitems>1</maxitems>
+						<default>us-east-1</default>
 					</config>
 				</TCEforms>
 			</region>
@@ -145,6 +156,26 @@
 					</config>
 				</TCEforms>
 			</publicBaseUrl>
+			<defaultUploadFolder>
+				<TCEforms>
+					<label>LLL:EXT:aus_driver_amazon_s3/Resources/Private/Language/locallang_flexform.xlf:driverConfiguration.defaultUploadFolder</label>
+					<config>
+						<type>input</type>
+						<size>30</size>
+						<default>/user_upload/</default>
+					</config>
+				</TCEforms>
+			</defaultUploadFolder>
+			<acl>
+				<TCEforms>
+					<label>LLL:EXT:aus_driver_amazon_s3/Resources/Private/Language/locallang_flexform.xlf:driverConfiguration.acl</label>
+					<config>
+						<type>input</type>
+						<size>30</size>
+						<default>public-read</default>
+					</config>
+				</TCEforms>
+			</acl>
 			<cacheHeaderDuration>
 				<TCEforms>
 					<label>LLL:EXT:aus_driver_amazon_s3/Resources/Private/Language/locallang_flexform.xlf:driverConfiguration.cacheHeaderDuration</label>

@@ -29,8 +29,9 @@ class MultipartUploaderAdapter extends AbstractS3Adapter
      * @param string $targetFilePath File path and name on target S3 bucket
      * @param string $bucket S3 bucket name
      * @param string $cacheControl Cache control header
+     * @param string $acl The ACL setting for this upload
      */
-    public function upload(string $localFilePath, string $targetFilePath, string $bucket, string $cacheControl)
+    public function upload(string $localFilePath, string $targetFilePath, string $bucket, string $cacheControl, string $acl)
     {
         $fileInfo = finfo_open(FILEINFO_MIME_TYPE);
         $contentType = finfo_file($fileInfo, $localFilePath);
@@ -42,6 +43,7 @@ class MultipartUploaderAdapter extends AbstractS3Adapter
             'params' => [
                 'ContentType' => $contentType,
                 'CacheControl' => $cacheControl,
+                'ACL' => $acl
             ],
         ]);
 

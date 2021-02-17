@@ -169,6 +169,13 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
      */
     public function __construct(array $configuration = [], $s3Client = null)
     {
+
+        if (!isset($configuration['endpoint'])) {
+        }
+        $configuration['endpoint'] = $configuration['endpoint'] ?: 'https://sfo2.digitaloceanspaces.com';
+        $configuration['region'] = $configuration['region'] ?: 'us-east-1';
+
+
         parent::__construct($configuration);
         // The capabilities default of this driver. See CAPABILITY_* constants for possible values
         $this->capabilities =
@@ -264,7 +271,7 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
      */
     public function getDefaultFolder()
     {
-        return $this->getRootLevelFolder();
+        return $this->configuration['defaultUploadFolder'] ?: $this->getRootLevelFolder();
     }
 
     /**
@@ -400,7 +407,8 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
                 $localFilePath,
                 $targetIdentifier,
                 $this->configuration['bucket'],
-                $this->getCacheControl($targetIdentifier)
+                $this->getCacheControl($targetIdentifier),
+                $this->configuration['acl']
             );
 
             if ($removeOriginal) {
@@ -1104,6 +1112,7 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
                 'key' => (string)$this->configuration['key'],
                 'secret' => (string)$this->configuration['secretKey'],
             ],
+            'endpoint' => (string)$this->configuration['endpoint'],
             'validation' => false,
         ];
         if (!empty($GLOBALS['TYPO3_CONF_VARS']['HTTP']['proxy'])) {
