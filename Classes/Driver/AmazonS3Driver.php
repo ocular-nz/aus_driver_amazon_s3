@@ -407,8 +407,7 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
                 $localFilePath,
                 $targetIdentifier,
                 $this->configuration['bucket'],
-                $this->getCacheControl($targetIdentifier),
-                $this->configuration['acl']
+                $this->getCacheControl($targetIdentifier)
             );
 
             if ($removeOriginal) {

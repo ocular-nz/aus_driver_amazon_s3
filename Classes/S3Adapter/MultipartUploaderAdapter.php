@@ -29,23 +29,28 @@ class MultipartUploaderAdapter extends AbstractS3Adapter
      * @param string $targetFilePath File path and name on target S3 bucket
      * @param string $bucket S3 bucket name
      * @param string $cacheControl Cache control header
-     * @param string $acl The ACL setting for this upload
+     * @param string|null $acl The ACL setting for this upload
      */
-    public function upload(string $localFilePath, string $targetFilePath, string $bucket, string $cacheControl, string $acl)
+    public function upload(string $localFilePath, string $targetFilePath, string $bucket, string $cacheControl, ?string $acl = null)
     {
         $fileInfo = finfo_open(FILEINFO_MIME_TYPE);
         $contentType = finfo_file($fileInfo, $localFilePath);
         finfo_close($fileInfo);
 
-        $uploader = new MultipartUploader($this->s3Client, $localFilePath, [
+        $options = [
             'bucket' => $bucket,
             'key' => $targetFilePath,
             'params' => [
                 'ContentType' => $contentType,
                 'CacheControl' => $cacheControl,
-                'ACL' => $acl
             ],
-        ]);
+        ];
+
+        if (!empty($acl)) {
+            $options['params']['ACL'] = $acl;
+        }
+
+        $uploader = new MultipartUploader($this->s3Client, $localFilePath, $options);
 
         // Upload and recover from errors
         do {

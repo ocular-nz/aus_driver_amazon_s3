@@ -166,16 +166,6 @@
 					</config>
 				</TCEforms>
 			</defaultUploadFolder>
-			<acl>
-				<TCEforms>
-					<label>LLL:EXT:aus_driver_amazon_s3/Resources/Private/Language/locallang_flexform.xlf:driverConfiguration.acl</label>
-					<config>
-						<type>input</type>
-						<size>30</size>
-						<default>public-read</default>
-					</config>
-				</TCEforms>
-			</acl>
 			<cacheHeaderDuration>
 				<TCEforms>
 					<label>LLL:EXT:aus_driver_amazon_s3/Resources/Private/Language/locallang_flexform.xlf:driverConfiguration.cacheHeaderDuration</label>
