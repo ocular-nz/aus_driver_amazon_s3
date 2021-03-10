@@ -38,6 +38,8 @@ use TYPO3\CMS\Core\Utility\VersionNumberUtility;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
 use TYPO3\CMS\Extbase\SignalSlot\Dispatcher;
 use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
+use AUS\AusDriverAmazonS3\Cache\MetaInfoCache;
+use AUS\AusDriverAmazonS3\Cache\ObjectPermissionsCache;
 
 /**
  * Class AmazonS3Driver
@@ -95,9 +97,9 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
      * Object meta data is cached here as array or null
      * $identifier => [meta info as array]
      *
-     * @var array[]
+     * @var MetaInfoCache
      */
-    protected $metaInfoCache = [];
+    protected $metaInfoCache = null;
 
     /**
      * Generic request -> response cache
@@ -113,9 +115,9 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
      * Object permissions are cached here in subarrays like:
      * $identifier => ['r' => bool, 'w' => bool]
      *
-     * @var array
+     * @var ObjectPermissionsCache
      */
-    protected $objectPermissionsCache = [];
+    protected $objectPermissionsCache = null;
 
     /**
      * Processing folder
@@ -234,6 +236,7 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
     {
         $this->initializeBaseUrl()
             ->initializeSettings()
+            ->initializeCaches()
             ->initializeClient();
         // Test connection if we are in the edit view of this storage
         if (TYPO3_MODE === 'BE' && !empty($_GET['edit']['sys_file_storage'])) {
@@ -1097,6 +1100,14 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
         return $this;
     }
 
+    protected function initializeCaches()
+    {
+        $identifierPrefix = $this->getStorageUid() . ':';
+        $this->metaInfoCache = MetaInfoCache::getInstance($identifierPrefix);
+        $this->objectPermissionsCache = ObjectPermissionsCache::getInstance($identifierPrefix);
+        return $this;
+    }
+
     /**
      * initializeClient
      *
@@ -1133,6 +1144,7 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
 
         if (!$this->s3Client) {
             $this->s3Client = new S3Client($configuration);
+            stream_context_set_option(stream_context_get_default(), $this->streamWrapperProtocol, 'acl', '');
             StreamWrapper::register($this->s3Client, $this->streamWrapperProtocol);
         }
         return $this;
@@ -1352,8 +1364,11 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
      * @return void
      */
     protected function renameObject($identifier, $newIdentifier)
-    {
-        rename($this->getStreamWrapperPath($identifier), $this->getStreamWrapperPath($newIdentifier));
+    {       
+        if (!rename($this->getStreamWrapperPath($identifier), $this->getStreamWrapperPath($newIdentifier))) {
+            throw new \Exception('Could not rename object - check error log');
+        }
+
         $this->identifierMap[$identifier] = $newIdentifier;
         $this->flushMetaInfoCache($identifier);
         $this->flushMetaInfoCache($newIdentifier);

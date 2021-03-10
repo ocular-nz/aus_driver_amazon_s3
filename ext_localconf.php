@@ -18,3 +18,11 @@ $GLOBALS['TYPO3_CONF_VARS']['SYS']['fal']['registeredDrivers'][\AUS\AusDriverAma
 $signalSlotDispatcher = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\CMS\Extbase\SignalSlot\Dispatcher');
 $signalSlotDispatcher->connect(\TYPO3\CMS\Core\Resource\Index\FileIndexRepository::class, 'recordUpdated', \AUS\AusDriverAmazonS3\Signal\FileIndexRepository::class, 'recordUpdatedOrCreated');
 $signalSlotDispatcher->connect(\TYPO3\CMS\Core\Resource\Index\FileIndexRepository::class, 'recordCreated', \AUS\AusDriverAmazonS3\Signal\FileIndexRepository::class, 'recordUpdatedOrCreated');
+
+if (!is_array($GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations']['s3_metainfo'])) {
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations']['s3_metainfo'] = [];
+}
+if (!is_array($GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations']['s3_permissions'])) {
+	$GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations']['s3_permissions'] = [];
+}
+
