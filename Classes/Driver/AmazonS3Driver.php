@@ -1480,7 +1480,7 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
                     $filter === self::FILTER_FILES && !$this->isDir($object['Key'])
                 )
             );
-        });
+        }) ?? [];
     }
 
     /**
@@ -1564,6 +1564,8 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
      */
     protected function copyObject($identifier, $targetIdentifier)
     {
+        // trim out leading slash if copying to storage root otherwise crazy shit happens
+        $targetIdentifier = ltrim($targetIdentifier, "/");
         $this->s3Client->copyObject([
             'Bucket' => $this->configuration['bucket'],
             'CopySource' => $this->configuration['bucket'] . '/' . $identifier,
