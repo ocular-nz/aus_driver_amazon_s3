@@ -1202,11 +1202,13 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
      * Get the meta information of an file or folder
      *
      * @param string $identifier
+     * @param bool $recursed
      * @return array|null Returns an array with the meta info or "null"
      */
-    protected function getMetaInfo($identifier)
+    protected function getMetaInfo($identifier, $recursed = false)
     {
         $this->normalizeIdentifier($identifier);
+
         if (!isset($this->metaInfoCache[$identifier])) {
             try {
                 $metadata = $this->s3Client->headObject([
@@ -1222,6 +1224,31 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
                     $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
                     $logger->log(LogLevel::WARNING, $exc->getMessage(), $exc->getTrace());
                 }
+
+                // if the object doesn't exist but subkeys are found, try to explicitly create the folder (b2 compatibility hack) 
+                $list = $this->s3Client->listObjectsV2([
+                    'Bucket' => $this->configuration['bucket'],
+                    'Prefix' => $identifier
+                ])->toArray();
+                
+                if ($list['KeyCount'] > 0 && !$recursed) {
+                    $pathParts = explode('/', $identifier);
+                    
+                    $newFolderName = '';
+                    do {
+                        $newFolderName = array_pop($pathParts);
+                    } while (empty($newFolderName));
+
+                    $parentFolder = '';
+                    if (count($pathParts)) {
+                        $parentFolder = implode('/', $pathParts) . '/';
+                    }
+                    $this->createFolder($newFolderName, $parentFolder);
+                    
+                    // now that we created the folder object, try to fetch metadata on it again
+                    return $this->getMetaInfo($identifier, $recursed = true);
+                }
+
                 $this->metaInfoCache[$identifier] = null;
             }
         }
