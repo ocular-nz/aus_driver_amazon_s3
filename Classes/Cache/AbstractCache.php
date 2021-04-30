@@ -21,6 +21,12 @@ abstract class AbstractCache implements ArrayAccess {
     /** @var int */
     protected $ttl = 0;
 
+    /** 
+     * memory buffer
+     * @var array
+     */
+    protected $buffer = [];
+
     /**
      * @param string $cacheIdentifier
      * @param string $identifierPrefix
@@ -34,22 +40,34 @@ abstract class AbstractCache implements ArrayAccess {
     
     public function offsetExists($offset)
     {
-        return $this->cache->has($this->hashOffset($offset));
+        $hash = $this->hashOffset($offset);
+        return isset($this->buffer[$hash]) || $this->cache->has($hash);
     }
     
     public function offsetGet($offset)
     {
-        return $this->cache->get($this->hashOffset($offset));
+        $hash = $this->hashOffset($offset);
+        
+        if (empty($this->buffer[$hash])) {
+            $this->buffer[$hash] = $this->cache->get($hash);
+        }
+        return $this->buffer[$hash];
     }
     
     public function offsetSet($offset, $value)
     {
-        return $this->cache->set($this->hashOffset($offset), $value, [], $this->getTtl());
+        $hash = $this->hashOffset($offset);
+
+        $this->buffer[$hash] = $value;
+        return $this->cache->set($hash, $value, [], $this->getTtl());
     }
     
     public function offsetUnset($offset)
     {
-        return $this->cache->remove($this->hashOffset($offset));
+        $hash = $this->hashOffset($offset);
+
+        unset($this->buffer[$hash]);
+        return $this->cache->remove($hash);
     }
 
     protected function getPrefix() {
@@ -61,6 +79,6 @@ abstract class AbstractCache implements ArrayAccess {
     }
 
     protected function hashOffset($offset) {
-        return hash('sha256', $this->getPrefix().$offset);
+        return hash('sha1', $this->getPrefix().$offset);
     }
 }
