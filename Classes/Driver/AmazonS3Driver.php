@@ -1530,7 +1530,7 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
         $metaInfoDownloadAdapter = GeneralUtility::makeInstance(MetaInfoDownloadAdapter::class);
         if (is_array($result['Contents'])) {
             foreach ($result['Contents'] as $content) {
-                $fileIdentifier = $identifier . $content['Key'];
+                $fileIdentifier = $content['Key'];
                 $this->normalizeIdentifier($fileIdentifier);
                 if (!isset($this->metaInfoCache[$fileIdentifier])) {
                     $this->metaInfoCache[$fileIdentifier] = $metaInfoDownloadAdapter->getMetaInfoFromResponse($this, $fileIdentifier, $content);
