@@ -3,11 +3,8 @@
 namespace AUS\AusDriverAmazonS3\Cache;
 
 use ArrayAccess;
-use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
 use TYPO3\CMS\Core\Cache\Frontend\FrontendInterface;
 use TYPO3\CMS\Core\Cache\CacheManager;
-use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 abstract class AbstractCache implements ArrayAccess {
