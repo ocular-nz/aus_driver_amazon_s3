@@ -40,6 +40,7 @@ use TYPO3\CMS\Extbase\SignalSlot\Dispatcher;
 use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
 use AUS\AusDriverAmazonS3\Cache\MetaInfoCache;
 use AUS\AusDriverAmazonS3\Cache\ObjectPermissionsCache;
+use AUS\AusDriverAmazonS3\Cache\RequestCache;
 
 /**
  * Class AmazonS3Driver
@@ -105,11 +106,9 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
      * Generic request -> response cache
      * Used for 'listObjectsV2' until now
      *
-     * @var array[][]
+     * @var RequestCache
      */
-    protected $requestCache = [
-        'listObjectsV2' => [],
-    ];
+    protected $requestCache = null;
 
     /**
      * Object permissions are cached here in subarrays like:
@@ -415,6 +414,7 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
             }
         }
         $this->flushMetaInfoCache($targetIdentifier);
+        $this->flushParentRequestCache($targetIdentifier);
 
         return $targetIdentifier;
     }
@@ -463,6 +463,7 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
         $contents = file_get_contents($localFilePath);
         $written = $this->setFileContents($fileIdentifier, $contents);
         $this->flushMetaInfoCache($fileIdentifier);
+        $this->flushParentRequestCache($fileIdentifier);
         return $written > 0;
     }
 
@@ -1102,6 +1103,7 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
         $identifierPrefix = $this->getStorageUid() . ':';
         $this->metaInfoCache = MetaInfoCache::getInstance($identifierPrefix);
         $this->objectPermissionsCache = ObjectPermissionsCache::getInstance($identifierPrefix);
+        $this->requestCache = RequestCache::getInstance($identifierPrefix);
         return $this;
     }
 
@@ -1262,11 +1264,16 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
      */
     protected function getCachedResponse($function, $parameter)
     {
-        $cacheIdentifier = md5(serialize($parameter));
-        if (!isset($this->requestCache[$function][$cacheIdentifier])) {
-            $this->requestCache[$function][$cacheIdentifier] = $this->s3Client->$function($parameter)->toArray();
+        $digest = $function.$parameter['Bucket'].$parameter['Prefix']; 
+        if (isset($parameter['Delimiter'])) {
+            $digest .= $parameter['Delimiter'];
         }
-        return $this->requestCache[$function][$cacheIdentifier];
+        
+        if (!isset($this->requestCache[$digest])) {
+            $this->requestCache[$digest] = $this->s3Client->$function($parameter)->toArray();
+        }
+        
+        return $this->requestCache[$digest];
     }
 
     /**
@@ -1279,6 +1286,26 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
     {
         $this->normalizeIdentifier($identifier);
         unset($this->metaInfoCache[$identifier]);
+    }
+
+    /**
+     * When updating an object we need to flush the listing of the parent key
+     * Otherwise changes are not shown until the cache is cleared manually
+     * 
+     * @param identifier
+     */
+    protected function flushParentRequestCache($identifier)
+    {
+        $this->normalizeIdentifier($identifier);
+        $parent = dirname($identifier) . '/';
+        if ($parent === '.') {
+            $parent = '';
+        }
+
+        // delete entries set with and without 'delimiter' option
+        $digest = 'listObjectsV2'.$this->configuration['bucket'].$parent;
+        unset($this->requestCache[$digest]);
+        unset($this->requestCache[$digest.'/']);
     }
 
     /**
@@ -1345,6 +1372,7 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
     {
         $this->s3Client->deleteObject(['Bucket' => $this->configuration['bucket'], 'Key' => $identifier]);
         $this->flushMetaInfoCache($identifier);
+        $this->flushParentRequestCache($identifier);
         return !$this->s3Client->doesObjectExist($this->configuration['bucket'], $identifier);
     }
 
@@ -1378,6 +1406,7 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
         ];
         $this->s3Client->putObject(array_merge_recursive($args, $overrideArgs));
         $this->flushMetaInfoCache($identifier);
+        $this->flushParentRequestCache($identifier);
     }
 
     /**
@@ -1396,6 +1425,8 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
         $this->identifierMap[$identifier] = $newIdentifier;
         $this->flushMetaInfoCache($identifier);
         $this->flushMetaInfoCache($newIdentifier);
+        $this->flushParentRequestCache($identifier);
+        $this->flushParentRequestCache($newIdentifier);
     }
 
     /**
@@ -1600,6 +1631,7 @@ class AmazonS3Driver extends AbstractHierarchicalFilesystemDriver
             'CacheControl' => $this->getCacheControl($targetIdentifier)
         ]);
         $this->flushMetaInfoCache($targetIdentifier);
+        $this->flushParentRequestCache($targetIdentifier);
     }
 
     /**
